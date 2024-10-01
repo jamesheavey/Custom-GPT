@@ -5,45 +5,58 @@ from torch.nn import functional as F
 
 class BigramLanguageModel(nn.Module):
 
-    def __init__(self, vocab_size):
+    def __init__(self, vocabulary_size):
         super().__init__()
-        # each token directly reads off the logits for the next token from a lookup table
-        self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
+        # Create a lookup table that predicts the next token for each input token
+        self.token_prediction_table = nn.Embedding(vocabulary_size, vocabulary_size)
 
-    def forward(self, idx, targets=None):
+    def forward(self, input_sequence, target_sequence=None):
+        # input_sequence: current sequence of token indices
+        # target_sequence: expected next tokens (optional)
 
-        # idx and targets are both (B,T) tensor of integers
-        logits = self.token_embedding_table(idx)  # (B,T,C)
-        B, T, C = logits.shape
-        logits = logits.view(B * T, C)
+        # Predict the next token for each input token
+        next_token_predictions = self.token_prediction_table(
+            input_sequence
+        )  # Shape: (Batch, Sequence_Length, Vocabulary_Size)
+        batch_size, sequence_length, vocabulary_size = next_token_predictions.shape
+        # Reshape predictions for loss calculation
+        flattened_predictions = next_token_predictions.view(batch_size * sequence_length, vocabulary_size)
 
-        loss = None
+        prediction_loss = None
+        if target_sequence is not None:
+            # If target sequence is provided, calculate the prediction loss
+            flattened_targets = target_sequence.view(batch_size * sequence_length)
+            prediction_loss = F.cross_entropy(flattened_predictions, flattened_targets)
 
-        if targets is not None:
-            targets = targets.view(B * T)
-            loss = F.cross_entropy(logits, targets)
+        return flattened_predictions, prediction_loss
 
-        return logits, loss
+    def generate(self, initial_sequence, num_new_tokens):
+        # initial_sequence: starting sequence of token indices
+        # num_new_tokens: number of new tokens to generate
 
-    def generate(self, idx, max_new_chars):
-        # idx is (B, T) array of indices in the current context
-        vocab_size = self.token_embedding_table.num_embeddings
-        for _ in range(max_new_chars):
-            # Ensure idx is within the valid range
-            idx = idx % vocab_size
-            # get the predictions
-            logits, loss = self.forward(idx)
+        vocabulary_size = self.token_prediction_table.num_embeddings
+        current_sequence = initial_sequence
 
-            # focus only on the last time step
-            if len(logits.shape) == 3:
-                logits = logits[:, -1, :]  # becomes (B, C)
+        for _ in range(num_new_tokens):
+            # Ensure all token indices are within the valid range
+            current_sequence = current_sequence % vocabulary_size
+
+            # Predict the next token
+            next_token_predictions, _ = self.forward(current_sequence)
+
+            # Focus on the prediction for the last token in the sequence
+            if len(next_token_predictions.shape) == 3:
+                last_token_prediction = next_token_predictions[:, -1, :]  # For batched input
             else:
-                logits = logits[:, -1]  # becomes (C,) for single sample
+                last_token_prediction = next_token_predictions[:, -1]  # For single sample input
 
-            # apply softmax to get probabilities
-            probs = F.softmax(logits, dim=-1)  # (B, C) or (C,)
-            # sample from the distribution
-            idx_next = torch.multinomial(probs, num_samples=1)  # (B, 1) or (1,)
-            # append sampled index to the running sequence
-            idx = torch.cat((idx, idx_next.unsqueeze(0)), dim=1)  # (B, T+1)
-        return idx
+            # Convert predictions to probabilities
+            next_token_probabilities = F.softmax(last_token_prediction, dim=-1)
+
+            # Randomly select the next token based on the probabilities
+            next_token = torch.multinomial(next_token_probabilities, num_samples=1)
+
+            # Add the new token to the sequence
+            current_sequence = torch.cat((current_sequence, next_token.unsqueeze(0)), dim=1)
+
+        return current_sequence  # Return the generated sequence
