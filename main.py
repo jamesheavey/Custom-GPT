@@ -71,5 +71,5 @@ logits, loss = model.forward(input_batch, target_batch)
 print(f"shape: {logits.shape}")
 print(f"loss: {loss}")
 
-# initiate generation with a 0 encoded
-print(decode(model.generate(idx=torch.zeros((1, 1), dtype=torch.long), max_new_chars=100)[0].tolist()))
+# initiate generation with a " " encoded
+print(decode(model.generate(initial_sequence=torch.tensor([encode(" ")], dtype=torch.long), num_new_tokens=100)))

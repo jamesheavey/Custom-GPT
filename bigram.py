@@ -5,10 +5,10 @@ from torch.nn import functional as F
 
 class BigramLanguageModel(nn.Module):
 
-    def __init__(self, vocabulary_size):
+    def __init__(self, vocab_size):
         super().__init__()
         # Create a lookup table that predicts the next token for each input token
-        self.token_prediction_table = nn.Embedding(vocabulary_size, vocabulary_size)
+        self.token_prediction_table = nn.Embedding(vocab_size, vocab_size)
 
     def forward(self, input_sequence, target_sequence=None):
         # input_sequence: current sequence of token indices
@@ -59,4 +59,4 @@ class BigramLanguageModel(nn.Module):
             # Add the new token to the sequence
             current_sequence = torch.cat((current_sequence, next_token.unsqueeze(0)), dim=1)
 
-        return current_sequence  # Return the generated sequence
+        return current_sequence[0].tolist()  # Return the generated sequence
