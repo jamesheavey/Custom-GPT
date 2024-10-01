@@ -1,4 +1,5 @@
 import torch
+from bigram import BigramLanguageModel
 
 with open("shakespeare.txt", "r", encoding="utf-8") as f:
     text = f.read()
@@ -55,8 +56,20 @@ def get_batch(data):
 
 input_batch, target_batch = get_batch(train_data)
 
-for batch_index in range(batch_size):
-    for time_step in range(context_window):
-        context = input_batch[batch_index, : time_step + 1]
-        target = target_batch[batch_index, time_step]
-        print(f"when input is {context.tolist()} the target: {target}")
+# for batch_index in range(batch_size):
+#     for time_step in range(context_window):
+#         context = input_batch[batch_index, : time_step + 1]
+#         target = target_batch[batch_index, time_step]
+#         print(f"when input is {context.tolist()} the target: {target}")
+
+print(input_batch)
+
+print(target_batch)
+
+model = BigramLanguageModel(vocab_size=len(vocab))
+logits, loss = model.forward(input_batch, target_batch)
+print(f"shape: {logits.shape}")
+print(f"loss: {loss}")
+
+# initiate generation with a 0 encoded
+print(decode(model.generate(idx=torch.zeros((1, 1), dtype=torch.long), max_new_chars=100)[0].tolist()))

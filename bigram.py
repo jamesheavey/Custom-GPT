@@ -16,24 +16,34 @@ class BigramLanguageModel(nn.Module):
         logits = self.token_embedding_table(idx)  # (B,T,C)
         B, T, C = logits.shape
         logits = logits.view(B * T, C)
-        targets = targets.view(B * T)
 
-        if targets:
+        loss = None
+
+        if targets is not None:
+            targets = targets.view(B * T)
             loss = F.cross_entropy(logits, targets)
 
         return logits, loss
 
-    def generate(self, idx, max_new_tokens):
+    def generate(self, idx, max_new_chars):
         # idx is (B, T) array of indices in the current context
-        for _ in range(max_new_tokens):
+        vocab_size = self.token_embedding_table.num_embeddings
+        for _ in range(max_new_chars):
+            # Ensure idx is within the valid range
+            idx = idx % vocab_size
             # get the predictions
-            logits, loss = self(idx)
+            logits, loss = self.forward(idx)
+
             # focus only on the last time step
-            logits = logits[:, -1, :]  # becomes (B, C)
+            if len(logits.shape) == 3:
+                logits = logits[:, -1, :]  # becomes (B, C)
+            else:
+                logits = logits[:, -1]  # becomes (C,) for single sample
+
             # apply softmax to get probabilities
-            probs = F.softmax(logits, dim=-1)  # (B, C)
+            probs = F.softmax(logits, dim=-1)  # (B, C) or (C,)
             # sample from the distribution
-            idx_next = torch.multinomial(probs, num_samples=1)  # (B, 1)
+            idx_next = torch.multinomial(probs, num_samples=1)  # (B, 1) or (1,)
             # append sampled index to the running sequence
-            idx = torch.cat((idx, idx_next), dim=1)  # (B, T+1)
+            idx = torch.cat((idx, idx_next.unsqueeze(0)), dim=1)  # (B, T+1)
         return idx
