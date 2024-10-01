@@ -21,11 +21,11 @@ encoding_map = {char: i for i, char in enumerate(vocab)}
 decoding_map = {i: char for i, char in enumerate(vocab)}
 
 
-def encode(string: str, encoding_map: dict) -> list[int]:
+def encode(string: str) -> list[int]:
     return [encoding_map[char] for char in string if char in encoding_map]
 
 
-def decode(encoded_list: list[int], decoding_map: dict) -> str:
+def decode(encoded_list: list[int]) -> str:
     return "".join([decoding_map[i] for i in encoded_list if i in decoding_map])
 
 

@@ -11,7 +11,8 @@ help:
 	@echo "Please use 'make <target>' where <target>' is one of"
 	@echo "  setup           to create a virtual environment"
 	@echo "  train        	 to run train.py, training the model"
-	@echo "  run        	 to run main.py"
+	@echo "  run-bigram      to run bigram.py"
+	@echo "  run-custom-gpt  to run custom_gpt.py"
 
 .PHONY: check-python-version
 check-python-version:
@@ -28,6 +29,10 @@ setup: check-python-version
 train: check-python-version
 	@. $(VENV)/bin/activate && $(PYTHON) train.py
 
-.PHONY: run
-run: check-python-version
-	@. $(VENV)/bin/activate && $(PYTHON) main.py
+.PHONY: run-bigram
+run-bigram: check-python-version
+	@. $(VENV)/bin/activate && $(PYTHON) bigram.py
+
+.PHONY: run-custom-gpt
+run-custom-gpt: check-python-version
+	@. $(VENV)/bin/activate && $(PYTHON) custom_gpt.py
