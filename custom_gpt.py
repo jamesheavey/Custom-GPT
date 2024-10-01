@@ -16,6 +16,8 @@ num_layers = 6  # number of transformer layers
 dropout_rate = 0.2  # dropout rate for regularization
 # ------------
 
+print(f"Running Model with: {device}")
+
 # Read the text data
 with open("shakespeare.txt", "r", encoding="utf-8") as f:
     text = f.read()
