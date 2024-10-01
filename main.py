@@ -5,15 +5,16 @@ print(text[:1000])
 
 # set of unique characters in the data set
 chars = sorted(list(set(text)))
-char_map = {char: i for i, char in enumerate(chars)}
+encoding_map = {char: i for i, char in enumerate(chars)}
+decoding_map = {i: char for i, char in enumerate(chars)}
 
 
-def encoder(string: str, encoding_map: dict = char_map) -> list[int]:
-    return [encoding_map[char] for char in string]
+def encoder(string: str, encoding_map: dict = encoding_map) -> list[int]:
+    return [encoding_map[char] for char in string if char in encoding_map]
 
 
-def decoder(encoded_list: list[int], decoding_map: dict = {i: char for char, i in char_map.items()}) -> str:
-    return "".join([decoding_map[i] for i in encoded_list])
+def decoder(encoded_list: list[int], decoding_map: dict = decoding_map) -> str:
+    return "".join([decoding_map[i] for i in encoded_list if i in decoding_map])
 
 
 test_string = "First Citizen: Before we proceed any further, hear me speak."
